@@ -44,11 +44,13 @@ Registration is straightforward and can be chained. This means that you can
 conditionally load resources. JAL has a convenience function for this, but
 you don't have to use it. It's all a matter of style.
 
-Example
-=======
+Examples
+========
+
+Basic loading
+-------------
 
 ```javascript
-// Basic loading
 $loader
     .load('js/jquery.min.js')
     .load([
@@ -58,12 +60,51 @@ $loader
     .ready(function() {
         // Start app
     })
-
-// Conditional loading
-$loader.when(typeof window.JSON === 'undefined', function(loader) {
-    loader.load('js/json.js')
-})
-// or
-if (typeof window.JSON === 'undefined') $loader.load('js/json.js')
 ```
+
+Conditional loading
+-------------------
+
+```javascript
+$loader
+    .when(typeof window.JSON === 'undefined', function(loader) {
+        loader.load('js/json.js')
+    })
+    .load('js/jquery.min.js')
+    .load([
+          'js/script-one.min.js'
+        , 'js/script-two.min.js'
+    ])
+    .ready(function() {
+        // Start app
+    })
+
+// or
+// if (typeof window.JSON === 'undefined') $loader.load('js/json.js')
+// Rest of loader script
+```
+Using the #done callback
+------------------------
+
+```javascript
+$loader
+    .when(typeof window.JSON === 'undefined', function(loader) {
+        loader.load('js/json.js')
+    })
+    .load('js/jquery.min.js')
+    .done(function(){
+        // Stop jQuery from triggering the "ready" event
+        $.holdReady(true)
+    })
+    .load([
+          'js/script-one.min.js'
+        , 'js/script-two.min.js'
+    ])
+    .ready(function() {
+        // Allow jQuery to trigger the "ready" event
+        $.holdReady(false)
+        // Start app
+    })
+```
+
 
