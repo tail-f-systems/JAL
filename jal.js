@@ -2,7 +2,7 @@
  * JAL - Just Another Loader
  * Conditional resource loader for modern web browser.
  *
- * Licensed under the apache v2 license.
+ * Licensed under the BSD license.
  *
  * Copyright 2012, Tail-F Systems AB.
  */
@@ -103,6 +103,7 @@
             tag = d.createElement('script');
             tag.setAttribute('type', (/.js$|.js\?/i).test(resource) ? 'text/javascript' : 'text/coffeescript');
             tag.setAttribute('src', resource);
+            tag.setAttribute('async', 'true');
             // The load handler triggers when the resource has been loaded.
             var _onload = function() {
                 if (tag.readyState && tag.readyState != 'complete' && tag.readyState != 'loaded') return;
@@ -161,7 +162,7 @@
 
         setTimeout(function() {
             if (pollerId == undefined) {
-                pollerId = setInterval(poll, 10);
+                pollerId = setInterval(poll, 2);
             }
         }, 0)
 
