@@ -2,7 +2,7 @@
  * JAL - Just Another Loader
  * Conditional resource loader for modern web browser.
  *
- * Licensed under the BSD license.
+ * Licensed under the Apache V2 license.
  *
  * Copyright 2012, Tail-F Systems AB.
  */
