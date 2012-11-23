@@ -107,4 +107,22 @@ $loader
     })
 ```
 
+Asynchronous loading of the loader
+----------------------------------
+To load JAL and a load script asynchronously inline a script snippet
+similar to the following in your web page:
+```html
+<script type="text/javascript">
+    document.getElementsByTagName('head')[0].appendChild((function() {
+        var scr = document.createElement('script')
+        scr.setAttribute('id', 'loader-script');
+        scr.setAttribute('type', 'text/javascript');
+        scr.setAttribute('src', 'js/jal.js?debug,all,load=js/load.js');
+        scr.setAttribute('async', 'true');
+        return scr
+    })())
+</script>
+````
+This will load JAL asynchronously and not block the main page from loading
+other resources.
 

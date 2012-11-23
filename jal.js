@@ -19,16 +19,27 @@
         css,                // querystring param
         js,                 // querystring param
         qs,                 // querystring (in script source)
+        loaderscript,       // optional async loader script
         d = document;
 
     queuePos = -1;
     holdLoad = false;
     readyListeners = [];
     readyFired = false;
-    qs = d.getElementById('loader-script').src.replace(/^[^\?]+\??/,'');
-    ctx.___DEBUG___ = (/debug/i).test(qs);
-    css = (/all|css/i).test(qs);
-    js = (/all|js/i).test(qs);
+    qs = d.getElementById('loader-script').src.replace(/^[^\?]+\??/,'').split(',')
+    for (var i = 0, len = qs.length; i < len; i++) {
+        if (qs[i] === 'debug') ctx.___DEBUG___ = true;
+        else if (qs[i] === 'all') {
+            css = true;
+            js = true;
+        } else if (qs[i] == 'css') {
+            css = true;
+        } else if (qs[i] == 'js') {
+            js = true;
+        } else if (qs[i].indexOf('load=') > -1) {
+            loaderscript = qs[i].substring(5)
+        }
+    }
     queue = [];
     head = d.getElementsByTagName('head')[0];
 
@@ -41,36 +52,27 @@
         db = function() {};
     }
 
-    // Poll the queue to see if there are resource to load.
-    function poll() {
-        var res;
-        if (queue.length == 0) {
-            // Queue empty, stop polling.
-            clearTimeout(pollerId);
-            pollerId = undefined;
-        }
-        else if (!wait) {
-            // Resource group loaded, continue to the next one.
-            wait = true;
-            res = queue.shift();
-            db('#poll - loading next resource: ', res)
+    // Load next resource on the queue
+    function nextResource() {
+        var res
+        if (queue.length === 0) {
+            fireReady();
+        } else {
+            res = queue.shift()
+            db('#nextResource - loading next resource', res);
             loadResources(res);
         }
     }
 
-    // Resource group loaded. Call listeners.
-    function loaded(res, fail, failedResource) {
-        var old = queuePos;
-        if (res.done) {
-            queuePos = 0;
-            db('#loaded - calling done on: ', res)
-            res.done(ctx.$loader);
+    // Load a resource group.
+    function loadResources(res) {
+        var monitor,
+            tag;
+        monitor = createMonitor(res);
+        for (var i = 0, i_len = res.res.length; i < i_len; i++) {
+            tag = createTag(res.res[i], monitor);
+            if (tag) head.appendChild(tag);
         }
-        // Restore queue position in case a resource was injected.
-        queuePos = old;
-        db('#loaded - wait = false')
-        wait = false;
-        if (queue.length === 0) fireReady();
     }
 
     // The monitor monitors the loading of the resource
@@ -130,15 +132,18 @@
         return tag;
     }
 
-    // Load a resource group.
-    function loadResources(res) {
-        var monitor,
-            tag;
-        monitor = createMonitor(res);
-        for (var i = 0, i_len = res.res.length; i < i_len; i++) {
-            tag = createTag(res.res[i], monitor);
-            if (tag) head.appendChild(tag);
+    // Resource group loaded. Call listeners.
+    function loaded(res, fail, failedResource) {
+        var old = queuePos;
+        if (res.done) {
+            queuePos = 0;
+            db('#loaded - calling done on: ', res)
+            res.done(ctx.$loader);
         }
+        // Restore queue position in case a resource was injected.
+        queuePos = old;
+        db('#loaded - wait = false')
+        nextResource();
     }
 
     // Register a resource group to be loaded in parallel.
@@ -160,11 +165,9 @@
             queuePos++;
         }
 
-        setTimeout(function() {
-            if (pollerId == undefined) {
-                pollerId = setInterval(poll, 2);
-            }
-        }, 0)
+        if (queue.length === 1) {
+            setTimeout(nextResource, 0);
+        }
 
         return ctx.$loader;
     }
@@ -231,6 +234,13 @@
         holdReady: holdReady,
         ready: ready
     };
-
+    // Load the loader script asynchronously
+    if (loaderscript) {
+        var tag = d.createElement('script');
+        tag.setAttribute('type', 'text/javascript');
+        tag.setAttribute('src', loaderscript);
+        tag.setAttribute('async', 'true');
+        head.appendChild(tag);
+    }
 })(this);
 
